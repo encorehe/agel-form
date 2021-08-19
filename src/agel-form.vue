@@ -1,9 +1,9 @@
 <template>
-  <el-form :class="['agel-form',{'agel-form-grid':!value.inline}]" ref="form" :model="value.data" v-bind="attrs.form" v-on="value.on||{}">
+  <el-form :class="['agel-form',{'agel-form-grid':!value.inline}]" :ref="ref" :model="value.data" v-bind="attrs.form" v-on="value.on||{}">
     <template v-if="value.inline">
       <slot name="prepend"></slot>
       <agel-form-item v-for="item in items" :item="item" :data="value.data" :prop="item.prop" :ref="item.prop" :key="item.prop"
-        v-show="item.show!==false">
+                      v-show="item.show!==false">
         <slot :name="item.prop"></slot>
       </agel-form-item>
       <slot name="append"></slot>
@@ -49,6 +49,11 @@ import {
 
 export default {
   name: "agel-form",
+  data () {
+    return {
+      ref:'ele'+ new Date().valueOf()
+    }
+  },
   inheritAttrs: false,
   components: {
     agelFormItem: () => import("./agel-form-item"),
@@ -70,6 +75,7 @@ export default {
   },
   watch: {
     value: {
+      deep:true,
       immediate: true,
       handler: "injectConfig",
     },
@@ -84,11 +90,11 @@ export default {
   mounted() {
     if (this.value.responsive) {
       this.resize();
-      addResizeListener(this.$refs.form.$el, this.resize);
+      addResizeListener(this.$refs[this.ref].$el, this.resize);
     }
   },
   beforeDestroy() {
-    removeResizeListener(this.$refs.form.$el, this.resize);
+    removeResizeListener(this.$refs[this.ref].$el, this.resize);
   },
   computed: {
     attrs() {
@@ -109,15 +115,15 @@ export default {
         });
       }
       return items
-        .map((v) => {
-          const item = this.injectConfig(v);
-          const agItem = this.getAgFormItemAttrs(item);
-          agItem.$formItem = this.getFormItemAttrs(item, agItem);
-          agItem.$col = this.getColAttrs(item);
-          agItem.$component = this.getComponentAttrs(item);
-          return agItem;
-        })
-        .filter((v) => v.display !== false);
+          .map((v) => {
+            const item = this.injectConfig(v);
+            const agItem = this.getAgFormItemAttrs(item);
+            agItem.$formItem = this.getFormItemAttrs(item, agItem);
+            agItem.$col = this.getColAttrs(item);
+            agItem.$component = this.getComponentAttrs(item);
+            return agItem;
+          })
+          .filter((v) => v.display !== false);
     },
   },
   methods: {
@@ -150,7 +156,7 @@ export default {
     },
     // 根据容器宽度响应式变化
     resize() {
-      let width = this.$refs.form.$el.clientWidth;
+      let width = this.$refs[this.ref].$el.clientWidth;
       if (!this.value.responsive || width == 0) return;
       let method = this.value.responsiveMethod || this.responsiveMethod;
       let keys = ["labelPosition", "labelWidth", "gutter"];
@@ -172,10 +178,10 @@ export default {
     getFieldValue(item) {
       let v = item.component || defaultComponent;
       if (
-        v == "el-input" ||
-        equalAgName(v, "agel-select") ||
-        equalAgName(v, "agel-tree-select") ||
-        (equalAgName(v, "agel-checkbox") && item.options != undefined)
+          v == "el-input" ||
+          equalAgName(v, "agel-select") ||
+          equalAgName(v, "agel-tree-select") ||
+          (equalAgName(v, "agel-checkbox") && item.options != undefined)
       ) {
         return "";
       }
@@ -189,9 +195,9 @@ export default {
         return 0;
       }
       if (
-        v == "el-cascader" ||
-        v == "el-transfer" ||
-        equalAgName(v, "agel-upload")
+          v == "el-cascader" ||
+          v == "el-transfer" ||
+          equalAgName(v, "agel-upload")
       ) {
         return [];
       }
@@ -200,22 +206,22 @@ export default {
     getAgFormItemAttrs(item) {
       const name = item.component || defaultComponent;
       const agItem = Object.assign(
-        agItemProps(),
-        getIncludeAttrs(agItemPropKyes, item)
+          agItemProps(),
+          getIncludeAttrs(agItemPropKyes, item)
       );
       agItem.component = agComponentsKeys.includes("ag" + name)
-        ? "ag" + name
-        : name;
+          ? "ag" + name
+          : name;
       agItem.slotLabel =
-        typeof item.label == "function" || isVNode(item.label)
-          ? item.label
-          : "";
+          typeof item.label == "function" || isVNode(item.label)
+              ? item.label
+              : "";
       agItem.display =
-        typeof item.display == "function"
-          ? item.display(this.value.data)
-          : item.display;
+          typeof item.display == "function"
+              ? item.display(this.value.data)
+              : item.display;
       agItem.show =
-        typeof item.show == "function" ? item.show(this.value.data) : item.show;
+          typeof item.show == "function" ? item.show(this.value.data) : item.show;
       agItem.slots = this.getSlots(agItem.slots);
       return agItem;
     },
@@ -235,26 +241,26 @@ export default {
     },
     getColAttrs(item) {
       return Object.assign(
-        getIncludeAttrs(colPorpKeys, this.value),
-        getIncludeAttrs(colPorpKeys, item)
+          getIncludeAttrs(colPorpKeys, this.value),
+          getIncludeAttrs(colPorpKeys, item)
       );
     },
     getComponentAttrs(item) {
       const ignoreKeys = [].concat(
-        colPorpKeys,
-        itemPropKyes,
-        agItemPropKyes,
-        this.itemExtendKeys
+          colPorpKeys,
+          itemPropKyes,
+          agItemPropKyes,
+          this.itemExtendKeys
       );
       const component = Object.assign(
-        getExcludeAttrs(ignoreKeys, item),
-        item.$component || {}
+          getExcludeAttrs(ignoreKeys, item),
+          item.$component || {}
       );
       component.placeholder = this.getPlaceholder(item);
       component.disabled =
-        typeof item.disabled == "function"
-          ? item.disabled(this.value.data)
-          : item.disabled;
+          typeof item.disabled == "function"
+              ? item.disabled(this.value.data)
+              : item.disabled;
       return component;
     },
     getPlaceholder(item) {
@@ -265,11 +271,11 @@ export default {
         return "请输入" + text;
       }
       if (
-        name == "el-cascader" ||
-        name == "el-time-select" ||
-        name == "el-date-picker" ||
-        equalAgName(name, "agel-select") ||
-        equalAgName(name, "agel-tree-select")
+          name == "el-cascader" ||
+          name == "el-time-select" ||
+          name == "el-date-picker" ||
+          equalAgName(name, "agel-select") ||
+          equalAgName(name, "agel-tree-select")
       ) {
         return "请选择" + text;
       }
@@ -292,7 +298,7 @@ export default {
     },
     // 暴露出去的功能函数
     getRef(prop) {
-      if (prop == undefined) return this.$refs.form;
+      if (prop == undefined) return this.$refs[this.ref];
       return this.$refs[prop] ? this.$refs[prop][0].getRef() : null;
     },
     getItem(prop, deep) {
@@ -304,7 +310,7 @@ export default {
       }
     },
     validate(callback, erroCallback) {
-      this.$refs.form.validate((is) => {
+      this.$refs[this.ref].validate((is) => {
         if (is) {
           callback && callback(this.value.data);
         } else {
@@ -313,13 +319,13 @@ export default {
       });
     },
     resetFields() {
-      this.$refs.form.resetFields();
+      this.$refs[this.ref].resetFields();
       this.items.forEach((v) => {
         if (v.component == "agel-upload") this.value.data[v.prop] = [];
       });
     },
     clearValidate(props) {
-      this.$refs.form.clearValidate(props);
+      this.$refs[this.ref].clearValidate(props);
     },
   },
   install(vue, opts = {}) {
@@ -339,7 +345,7 @@ export default {
 }
 
 .agel-form .el-form-item {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .agel-form.el-form--label-top .el-form-item__label {

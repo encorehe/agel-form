@@ -1,11 +1,11 @@
 {
-  "name": "agel-form",
-  "version": "0.2.7",
+  "name": "agel-form-pro",
+  "version": "0.1.1",
   "main": "src/index.js",
   "description": "a easy form of element-ui form",
   "homepage": "https://github.com/agrass-GitHub/agel-form",
   "license": "MIT",
-  "author": "agrass",
+  "author": "encorehe",
   "keywords": [
     "element-ui",
     "element-ui form",
